@@ -37,91 +37,116 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var Gravatar = function (_React$Component) {
   _inherits(Gravatar, _React$Component);
 
-  function Gravatar() {
+  function Gravatar(props, context) {
     _classCallCheck(this, Gravatar);
 
-    return _possibleConstructorReturn(this, (Gravatar.__proto__ || Object.getPrototypeOf(Gravatar)).apply(this, arguments));
+    var _this = _possibleConstructorReturn(this, (Gravatar.__proto__ || Object.getPrototypeOf(Gravatar)).call(this, props, context));
+
+    _this._handleErrors = function () {
+      if (_this.props.fallback) {
+        _this.setState({ display: 'fallback' });
+      }
+    };
+
+    _this.state = {
+      display: 'image'
+    };
+    return _this;
   }
 
   _createClass(Gravatar, [{
     key: 'render',
     value: function render() {
-      var base = this.props.protocol + 'www.gravatar.com/avatar/';
+      var _this2 = this;
 
-      var query = _queryString2.default.stringify({
-        s: this.props.size,
-        r: this.props.rating,
-        d: this.props.default
-      });
-
-      var retinaQuery = _queryString2.default.stringify({
-        s: this.props.size * 2,
-        r: this.props.rating,
-        d: this.props.default
-      });
-
-      // Gravatar service currently trims and lowercases all registered emails
-      var formattedEmail = ('' + this.props.email).trim().toLowerCase();
-
-      var hash = void 0;
-      if (this.props.md5) {
-        hash = this.props.md5;
-      } else if (typeof this.props.email === 'string') {
-        hash = (0, _md2.default)(formattedEmail, { encoding: "binary" });
+      if (this.state.display === 'fallback') {
+        // Fall back to another default component if the image results in a 404
+        return this.props.fallback;
       } else {
-        console.warn('Gravatar image can not be fetched. Either the "email" or "md5" prop must be specified.');
-        return _react2.default.createElement('script', null);
-      }
+        var base = this.props.protocol + 'www.gravatar.com/avatar/';
 
-      var src = '' + base + hash + '?' + query;
-      var retinaSrc = '' + base + hash + '?' + retinaQuery;
+        var query = _queryString2.default.stringify({
+          s: this.props.size,
+          r: this.props.rating,
+          d: this.props.default
+        });
 
-      var modernBrowser = true; // server-side, we render for modern browsers
+        var retinaQuery = _queryString2.default.stringify({
+          s: this.props.size * 2,
+          r: this.props.rating,
+          d: this.props.default
+        });
 
-      if (typeof window !== 'undefined') {
-        // this is not NodeJS
-        modernBrowser = 'srcset' in document.createElement('img');
-      }
+        // Gravatar service currently trims and lowercases all registered emails
+        var formattedEmail = ('' + this.props.email).trim().toLowerCase();
 
-      var className = 'react-gravatar';
-      if (this.props.className) {
-        className = className + ' ' + this.props.className;
-      }
+        var hash = void 0;
+        if (this.props.md5) {
+          hash = this.props.md5;
+        } else if (typeof this.props.email === 'string') {
+          hash = (0, _md2.default)(formattedEmail, { encoding: "binary" });
+        } else {
+          console.warn('Gravatar image can not be fetched. Either the "email" or "md5" prop must be specified.');
+          return _react2.default.createElement('script', null);
+        }
 
-      // Clone this.props and then delete Component specific props so we can
-      // spread the rest into the img.
+        var src = '' + base + hash + '?' + query;
+        var retinaSrc = '' + base + hash + '?' + retinaQuery;
 
-      var rest = _objectWithoutProperties(this.props, []);
+        var modernBrowser = true; // server-side, we render for modern browsers
 
-      delete rest.md5;
-      delete rest.email;
-      delete rest.protocol;
-      delete rest.rating;
-      delete rest.size;
-      delete rest.style;
-      delete rest.className;
-      delete rest.default;
-      if (!modernBrowser && (0, _isRetina2.default)()) {
+        if (typeof window !== 'undefined') {
+          // this is not NodeJS
+          modernBrowser = 'srcset' in document.createElement('img');
+        }
+
+        var className = 'react-gravatar';
+        if (this.props.className) {
+          className = className + ' ' + this.props.className;
+        }
+
+        // Clone this.props and then delete Component specific props so we can
+        // spread the rest into the img.
+
+        var rest = _objectWithoutProperties(this.props, []);
+
+        delete rest.md5;
+        delete rest.email;
+        delete rest.protocol;
+        delete rest.rating;
+        delete rest.size;
+        delete rest.style;
+        delete rest.className;
+        delete rest.default;
+        delete rest.fallback;
+        if (!modernBrowser && (0, _isRetina2.default)()) {
+          return _react2.default.createElement('img', _extends({
+            alt: 'Gravatar for ' + formattedEmail,
+            style: this.props.style,
+            src: retinaSrc,
+            height: this.props.size,
+            width: this.props.size
+          }, rest, {
+            className: className,
+            onError: function onError() {
+              return _this2._handleErrors();
+            }
+          }));
+        }
         return _react2.default.createElement('img', _extends({
           alt: 'Gravatar for ' + formattedEmail,
           style: this.props.style,
-          src: retinaSrc,
+          src: src,
+          srcSet: retinaSrc + ' 2x',
           height: this.props.size,
           width: this.props.size
         }, rest, {
-          className: className
+          className: className,
+          onError: function onError() {
+            return _this2._handleErrors();
+          }
         }));
       }
-      return _react2.default.createElement('img', _extends({
-        alt: 'Gravatar for ' + formattedEmail,
-        style: this.props.style,
-        src: src,
-        srcSet: retinaSrc + ' 2x',
-        height: this.props.size,
-        width: this.props.size
-      }, rest, {
-        className: className
-      }));
     }
   }]);
 
@@ -137,7 +162,8 @@ Gravatar.propTypes = {
   default: _propTypes2.default.string,
   className: _propTypes2.default.string,
   protocol: _propTypes2.default.string,
-  style: _propTypes2.default.object
+  style: _propTypes2.default.object,
+  fallback: _propTypes2.default.object
 };
 Gravatar.defaultProps = {
   size: 50,
